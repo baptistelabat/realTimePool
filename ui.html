@@ -1,0 +1,57 @@
+<!DOCTYPE HTML>
+<html style="direction: ltr;" lang="fr">
+<head>
+<meta content="text/html; charset=UTF-8" http-equiv="content-type"/>
+<style type=text/css>
+    body { }
+</style>
+<script type = "text/javascript" language="javascript"
+src = "static/script.js" charset="utf-8"></script>
+</head>
+<body>
+	<script type="text/javascript">
+		document.write("ws://"+window.location.host + "/websocket")
+		</script>
+Sondage temps réel
+<form action = "">
+<fieldset>
+<input id = "UserVoteRange"
+type = "range"
+min = "0"
+max = "100"
+value = "50"
+step = "1"
+onchange = "updateUserVoteRange()" />
+<input id = "UserVoteNumber"
+type = "number"
+min = "0"
+max = "100"
+value = "50"
+step = "1"
+onchange = "updateUserVoteNumber()" />
+<output id = "UserVote">50</output>
+</fieldset>
+<fieldset>
+<output id = "publicVote">50</output>
+</fieldset>
+        <script type="text/javascript">
+            var ws = new WebSocket("ws://"+window.location.host + "/websocket");
+            ws.onmessage = function(evt){
+				var myOutput = document.getElementById("publicVote");
+                myOutput.value = evt.data;
+										}
+        </script>
+<script>
+  var inputs = document.getElementsByTagName('input');
+
+  for(var i = 0; i < inputs.length; i++) {
+    if(inputs[i].type == 'range') {
+      inputs[i].addEventListener('click', function() {
+        this.focus(); 
+      });
+    }
+  }
+</script>
+</body>
+</html>
+            
