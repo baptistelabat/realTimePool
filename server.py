@@ -44,8 +44,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
       self.write_message(u"Connected")
       print "open"
       
-    def close(self):
-      self.write_message(u"Connection closed")
+    def on_close(self):
       clients.remove(self)
       print "close"
 
