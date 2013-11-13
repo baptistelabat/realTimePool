@@ -13,10 +13,14 @@ import tornado.web
 import tornado.websocket
 import tornado.ioloop
 import os
+import time
+import json
+import numpy as np
     
 clients = []
 global alpha
 alpha = 0
+t0 = time.time()
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -25,23 +29,21 @@ class MainHandler(tornado.web.RequestHandler):
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def on_message(self, message):
         #self.write_message(u"Status OK " + message)
+        t = time.time()-t0
         self.vote = message
-        s = 0
+        votes = []
         n = 0
         for c in clients:
 			if c is not None:
-				s = s + int(c.vote)
-				n = n+1
-        print s/n
+				votes.append(int(c.vote))
         for c in clients:
 			if c is not None:
-			  c.write_message(str(round(s*1.0/len(clients),1)))
+			  c.write_message( json.dumps({'t':t, 'mean':np.mean(votes), 'min':np.min(votes), 'max':np.max(votes), 'q1':np.percentile(votes, 25), 'q3':np.percentile(votes, 75)}))
         
 
     def open(self):
       self.vote = 50
       clients.append(self)
-      self.write_message(u"Connected")
       print "open"
       
     def on_close(self):

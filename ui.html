@@ -31,12 +31,59 @@ onchange = "updateUserVoteNumber()" />
 <fieldset>
 <output id = "publicVote">50</output>
 </fieldset>
+<div id="graphDiv" style="width:960px; height:600px;"></div>
         <script type="text/javascript">
+			d0 = [];
+			d1 = [];
+			d2 = [];
+			d3 = [];
+			d4 = [];
+			var data, obj;
+			MAX_OCL = 200;
             var ws = new WebSocket("ws://"+window.location.host + "/websocket");
             ws.onmessage = function(evt){
 				var myOutput = document.getElementById("publicVote");
-                myOutput.value = evt.data;
-										}
+                var msg = evt.data;
+                obj = JSON.parse(msg);
+                myOutput.value = obj.mean
+				d0.push([obj.t, obj.mean]);
+				d1.push([obj.t, obj.min]);
+				d2.push([obj.t, obj.max]);
+				d3.push([obj.t, obj.q1]);
+				d4.push([obj.t, obj.q3]);
+				if(d0.length > MAX_OCL){
+					d0.shift();
+				}
+				if(d1.length > MAX_OCL){
+					d1.shift();
+				}
+				if(d2.length > MAX_OCL){
+					d2.shift();
+				}
+				if(d3.length > MAX_OCL){
+					d3.shift();
+				}
+				if(d4.length > MAX_OCL){
+					d4.shift();
+				}
+				data = [{
+		data: d0,
+        label: 'Moyenne',
+        lines:{show: true, fill: true, fillColor:'#000000'}
+    }, {
+        data: d1,
+        label: 'Minimum'
+    }, {
+        data: d2,
+        label: 'Maximum'
+    }, {
+		data: d3,
+        label: 'Q1'
+    }, {
+		data: d4,
+        label: 'Q3'
+    }];
+			}
         </script>
 <script>
   var inputs = document.getElementsByTagName('input');
@@ -49,6 +96,38 @@ onchange = "updateUserVoteNumber()" />
     }
   }
 </script>
+		<script type="text/javascript" src="static/flotr2.js"></script>
+		<script type="text/javascript">
+			(function () {
+				var graph;
+				var container = document.getElementById("graphDiv");
+
+				// Draw Graph
+				function drawGraph(){
+					graph = Flotr.draw(container, data, {
+						xaxis: {
+							minorTickFreq: 4
+						}, 
+						yaxis: {
+							max: 0,
+							min: 100,
+							minorTickFreq: 25
+						},
+						grid: {
+							minorVerticalLines: true,
+							minorHorizontalLines: true
+						}
+					});
+
+					// Reload
+					setTimeout(function(){
+						drawGraph();
+					}, 100);
+				}
+
+				drawGraph();
+			})();
+		</script>
 </body>
 </html>
             
