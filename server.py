@@ -60,8 +60,10 @@ settings = dict(
 application = tornado.web.Application(handlers, **settings)
  
 if __name__ == "__main__":
+    print "Launching the server"
     application.listen(8080)
     mainLoop = tornado.ioloop.IOLoop.instance()
+    print "Server launched"
     mainLoop.start()
     
 
