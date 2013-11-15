@@ -38,7 +38,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 				votes.append(int(c.vote))
         for c in clients:
 			if c is not None:
-			  c.write_message( json.dumps({'t':t, 'mean':np.mean(votes), 'min':np.min(votes), 'max':np.max(votes), 'q1':np.percentile(votes, 25), 'q3':np.percentile(votes, 75)}))
+			  c.write_message( json.dumps({'t':t, 'mean':str(np.mean(votes)), 'min':str(np.min(votes)), 'max':str(np.max(votes)), 'q1':str(np.percentile(votes, 25)), 'q3':str(np.percentile(votes, 75))}))
         
 
     def open(self):
