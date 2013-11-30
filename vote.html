@@ -1,0 +1,43 @@
+﻿<!DOCTYPE HTML>
+<html style="direction: ltr;" lang="fr">
+<head>
+	<meta content="text/html; charset=UTF-8" http-equiv="content-type"/>
+	<!--sensor-->
+	<link rel="stylesheet" href="../css/sensor.css" />
+	<link rel="stylesheet" type="text/css" href="components/font-awesome/css/font-awesome.min.css" />  	
+</head>
+<body>
+	<form action = "">
+		<fieldset>
+			<input id = "UserVoteRange"
+				type = "range"
+				min = "0"
+				max = "100"
+				value = "50"
+				step = "1" />
+			<input id = "UserVoteNumber"
+				type = "number"
+				min = "0"
+				max = "100"
+				value = "50"
+				step = "1"/>
+			<output id = "UserVote">50</output>
+		</fieldset>
+	</form>	
+	
+	<i id="star1" class="icon icon-star icon-4x"></i>
+	<i id="star2" class="icon icon-star icon-4x"></i>
+	<i id="star3" class="icon icon-star icon-4x"></i>
+	<i id="star4" class="icon icon-star icon-4x"></i>
+	<i id="star5" class="icon icon-star icon-4x"></i>
+   
+	<script src="/socket.io/socket.io.js"></script>
+	<script src="../components/fastclick/fastclick.js"></script>
+	<script src="../components/qrcode/qrcode.min.js"></script>
+	<script src="../components/jquery/jquery-1.10.2.min.js"></script>
+	<script src="../components/prefixfree/prefixfree.min.js"></script>
+
+	<script type = "text/javascript" language="javascript" src = "javascript/app_vote.js" charset="utf-8"></script>	
+</body>
+</html>
+            
