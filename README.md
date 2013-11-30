@@ -11,4 +11,22 @@ The clients connect to the webserver based on ip address (from qr code) or url. 
 The user can choose a value between 0 and 100 (or 0 to 5 stars). This value is sent to server (in real time using websocket).
 The mean value of all users is computed by the server and sent back to the clients to be displayed below.
 
+Installation
+============
+
+You need to have node.js installed
+
+git clone https://github.com/baptistelabat/realTimePool.git
+cd realTimePool
+npm install
+
+Launching the server
+====================
+
+node server.js
+
+You can now open a web browser and go to localhost:8080. This is the results page.
+You should see a page. click on wlan, to get a QRcode which is giving the voter page address.
+
+
 
