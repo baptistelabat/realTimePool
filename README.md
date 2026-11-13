@@ -1,32 +1,66 @@
 realTimePool
 ============
 
-Host a piece of software that could be used to do a real time pool during a meeting.
+Run a real-time poll during a meeting.
 
-This software was started by Baptiste Labat
-This software was then modified during a code sprint at Stereolux following a workshop on HTML5 by Binomed (switching from tornado to node webserver, and integrating mobile device orientation).
+Participants scan a QR code on the results screen to open the vote page on their phone. They give a score from 0 to 100 (shown as 0 to 5 stars) with a slider. On a phone they can also tilt the device instead. The score is sent to the server over WebSockets. The results page updates live with:
 
+- a smiley that reacts to the average score,
+- a chart of the average score over time,
+- a histogram of the votes.
 
-The clients connect to the webserver based on ip address (from qr code) or url. A html5 slider is displayed with value from 0 to 100. Alternatively on a mobile device, the orientation might be used.
-The user can choose a value between 0 and 100 (or 0 to 5 stars). This value is sent to server (in real time using websocket).
-The mean value of all users is computed by the server and sent back to the clients to be displayed below.
+This software was started by Baptiste Labat. It was then modified during a code sprint at Stereolux, after an HTML5 workshop by Binomed. The sprint switched the server from Tornado to Node.js and added mobile device orientation. In 2026 it was modernized: Node.js 20+, Express 5, Socket.IO 4, Chart.js 4, no jQuery, and security fixes.
+
+Requirements
+------------
+
+[Node.js](https://nodejs.org/) 20 or newer.
 
 Installation
-============
+------------
 
-You need to have node.js installed
-
+```bash
 git clone https://github.com/baptistelabat/realTimePool.git
 cd realTimePool
 npm install
+```
 
 Launching the server
-====================
+--------------------
 
-node server.js
+```bash
+npm start
+```
 
-You can now open a web browser and go to localhost:8080. This is the results page.
-You should see a page. click on wlan, to get a QRcode which is giving the voter page address.
+Open <http://localhost:8080/> on the computer connected to the projector. This is the results page. Choose the network interface the participants are connected to (usually the Wi-Fi one) to show the matching QR code.
 
+Configuration uses environment variables:
 
+| Variable | Default   | Description          |
+|----------|-----------|----------------------|
+| `PORT`   | `8080`    | HTTP port            |
+| `HOST`   | `0.0.0.0` | Interface to bind to |
 
+Use `npm run dev` to restart the server automatically when files change.
+
+### Tilt to vote
+
+Browsers only give access to the orientation sensor in a [secure context](https://developer.mozilla.org/docs/Web/Security/Secure_Contexts). In practice that means HTTPS, and iOS also requires an explicit tap. When the app is served over plain HTTP on a local network, the tilt button may not work on some phones; the slider always works. To use tilt everywhere, put the server behind an HTTPS reverse proxy (Caddy, nginx, …).
+
+Development
+-----------
+
+```bash
+npm test
+```
+
+Project layout:
+
+- `src/`: server (Express static files, `/api/addresses`, Socket.IO)
+- `public/`: the only directory served to browsers
+- `test/`: tests using the built-in `node:test` runner
+
+License
+-------
+
+MIT, see [LICENSE](LICENSE).

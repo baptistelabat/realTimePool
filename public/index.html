@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sondage temps réel</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="results">
+  <header>
+    <h1>Sondage temps réel</h1>
+    <p class="status"><span id="voterCount">0</span> participant(s) · <span id="connection" class="offline">déconnecté</span></p>
+  </header>
+
+  <main class="results-grid">
+    <section class="card mood">
+      <svg viewBox="-21 -21 42 42" role="img" aria-labelledby="moodTitle">
+        <title id="moodTitle">Humeur moyenne</title>
+        <defs>
+          <radialGradient id="shine" cx=".2" cy=".2" r=".5" fx=".2" fy=".2">
+            <stop offset="0" stop-color="white" stop-opacity=".7"/>
+            <stop offset="1" stop-color="white" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="grad" cx=".5" cy=".5" r=".5">
+            <stop offset="0" stop-color="yellow"/>
+            <stop offset=".75" stop-color="yellow"/>
+            <stop offset=".95" stop-color="#ee0"/>
+            <stop offset="1" stop-color="#e8e800"/>
+          </radialGradient>
+        </defs>
+        <circle r="20" stroke="black" stroke-width=".15" fill="url(#grad)"/>
+        <circle r="20" fill="url(#shine)"/>
+        <ellipse rx="2.5" ry="4" cx="-6" cy="-7" fill="black"/>
+        <ellipse rx="2.5" ry="4" cx="6" cy="-7" fill="black"/>
+        <path id="mouth" d="M -12,5 Q 0,5 12,5" fill="none" stroke="black" stroke-width="0.75" stroke-linecap="round"/>
+      </svg>
+      <p class="mean">Moyenne : <strong id="meanValue">–</strong></p>
+    </section>
+
+    <section class="card">
+      <h2>Évolution de la moyenne</h2>
+      <div class="chart"><canvas id="meanChart"></canvas></div>
+    </section>
+
+    <section class="card">
+      <h2>Répartition</h2>
+      <div class="chart"><canvas id="histogramChart"></canvas></div>
+    </section>
+
+    <section class="card join">
+      <h2>Participer</h2>
+      <div id="addressList" class="address-list"></div>
+      <img id="qrCode" alt="QR code de la page de vote" hidden>
+      <p><a id="voteUrl" href="vote.html"></a></p>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.min.js"></script>
+  <script src="/vendor/chart.js/chart.umd.min.js"></script>
+  <script type="module" src="js/results.js"></script>
+</body>
+</html>

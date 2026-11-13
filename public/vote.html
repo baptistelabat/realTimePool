@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Votez !</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="vote">
+  <main class="card">
+    <h1>Votre avis</h1>
+
+    <div class="stars" id="stars" aria-hidden="true">
+      <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+    </div>
+
+    <label for="voteRange" class="visually-hidden">Note de 0 à 100</label>
+    <input id="voteRange" type="range" min="0" max="100" value="50" step="1">
+
+    <div class="vote-value">
+      <label for="voteNumber" class="visually-hidden">Note</label>
+      <input id="voteNumber" type="number" min="0" max="100" value="50" step="1" inputmode="numeric"> / 100
+    </div>
+
+    <button id="tiltButton" type="button" hidden>Voter en inclinant le téléphone</button>
+    <p id="tiltHelp" class="help" hidden>Inclinez le téléphone vers l'avant ou l'arrière pour changer la note.</p>
+
+    <p class="status"><span id="connection" class="offline">déconnecté</span></p>
+  </main>
+
+  <script src="/socket.io/socket.io.min.js"></script>
+  <script type="module" src="js/vote.js"></script>
+</body>
+</html>
