@@ -25,18 +25,27 @@ number.addEventListener('change', () => setVote(number.value));
 socket.on('connect', () => socket.emit('vote', current));
 setVote(current);
 
-// Tilt-to-vote: opt-in, because iOS requires an explicit user gesture
-// (and a secure context) to grant access to the orientation sensor.
+// Tilt-to-vote: opt-in, because iOS requires an explicit user gesture to grant
+// access to the orientation sensor. Browsers only expose it on secure (HTTPS) pages.
 const tiltButton = document.getElementById('tiltButton');
 const tiltHelp = document.getElementById('tiltHelp');
 
+function showTiltMessage(text) {
+  tiltHelp.textContent = text;
+  tiltHelp.hidden = false;
+}
+
+let sensorWorks = false;
 function onOrientation(event) {
   if (event.beta === null) return;
+  sensorWorks = true;
   // Phone flat = 0°, upright = 90°: map the [0°, 90°] front/back tilt onto [0, 100].
   setVote((event.beta / 90) * 100);
 }
 
-if ('DeviceOrientationEvent' in window && matchMedia('(pointer: coarse)').matches) {
+if (!window.isSecureContext) {
+  showTiltMessage('Vote par inclinaison indisponible : cette page doit être ouverte en HTTPS.');
+} else if ('DeviceOrientationEvent' in window && matchMedia('(pointer: coarse)').matches) {
   tiltButton.hidden = false;
   tiltButton.addEventListener('click', async () => {
     try {
@@ -46,10 +55,14 @@ if ('DeviceOrientationEvent' in window && matchMedia('(pointer: coarse)').matche
       }
       window.addEventListener('deviceorientation', onOrientation);
       tiltButton.hidden = true;
-      tiltHelp.hidden = false;
+      showTiltMessage("Inclinez le téléphone vers l'avant ou l'arrière pour changer la note.");
+      setTimeout(() => {
+        if (!sensorWorks) showTiltMessage("Aucune donnée du capteur d'orientation reçue.");
+      }, 3000);
     } catch {
-      tiltButton.disabled = true;
-      tiltButton.textContent = 'Capteur d’orientation indisponible';
+      showTiltMessage(
+        'Accès aux capteurs de mouvement refusé : autorisez-le dans les paramètres du site puis réessayez.',
+      );
     }
   });
 }

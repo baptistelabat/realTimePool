@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { createServer as createHttpsServer } from 'node:https';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,25 +17,36 @@ const rootDir = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const publicDir = path.join(rootDir, 'public');
 const chartJsDir = path.dirname(require.resolve('chart.js')); // resolves inside chart.js/dist
 
+const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+
 /**
- * Build the HTTP + WebSocket server. Nothing listens until `server.listen()` is called.
+ * Build the poll server. Nothing listens until `.listen()` is called on the returned servers.
+ *
+ * An HTTPS server is created too when `tls` ({key, cert}) is given. Phones need it:
+ * browsers only expose the orientation sensor (tilt-to-vote) on secure pages.
+ * Both servers share the same votes.
  *
  * @param {object} [options]
+ * @param {{key: string, cert: string}} [options.tls]
  * @param {number} [options.broadcastIntervalMs] how often results are pushed to clients
  * @param {() => {name: string, ip: string}[]} [options.listAddresses] injectable for tests
  */
 export function createPollServer({
+  tls,
   broadcastIntervalMs = 200,
   listAddresses = listIPv4Addresses,
 } = {}) {
   const app = express();
+  const server = createServer(app);
+  const httpsServer = tls ? createHttpsServer(tls, app) : null;
+
   app.disable('x-powered-by');
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           'img-src': ["'self'", 'data:'],
-          // The app is typically used over plain HTTP on a local network:
+          // The results page is typically used over plain HTTP:
           // forcing HTTPS would break every sub-resource.
           'upgrade-insecure-requests': null,
         },
@@ -43,19 +55,26 @@ export function createPollServer({
     }),
   );
 
-  // Only the `public` directory is exposed (the old server exposed the whole repo).
+  // Voters reaching the plain HTTP vote page from another device are sent to HTTPS,
+  // otherwise their browser hides the orientation sensor.
+  app.get('/vote.html', (req, res, next) => {
+    if (!httpsServer?.listening || req.secure || LOOPBACK.has(req.socket.remoteAddress)) return next();
+    res.redirect(302, `https://${req.hostname}:${httpsServer.address().port}${req.originalUrl}`);
+  });
+
+  // Only the `public` directory is exposed.
   app.use(express.static(publicDir));
   app.use('/vendor/chart.js', express.static(chartJsDir));
-
-  const server = createServer(app);
 
   // Addresses at which voters can reach this server, with a ready-to-display QR code.
   app.get('/api/addresses', async (req, res, next) => {
     try {
-      const { port } = server.address();
+      const target = httpsServer?.listening ? httpsServer : server;
+      const protocol = target === httpsServer ? 'https' : 'http';
+      const { port } = target.address();
       const entries = await Promise.all(
         listAddresses().map(async ({ name, ip }) => {
-          const url = `${req.protocol}://${ip}:${port}/vote.html`;
+          const url = `${protocol}://${ip}:${port}/vote.html`;
           return { name, ip, url, qrCode: await QRCode.toDataURL(url, { width: 256, margin: 1 }) };
         }),
       );
@@ -65,36 +84,43 @@ export function createPollServer({
     }
   });
 
-  const io = new Server(server, {
-    serveClient: true,
-    maxHttpBufferSize: 1024, // a vote is a single number
-  });
-
   /** socket.id -> latest vote, voters only (the results page is not counted). */
   const votes = new Map();
 
-  io.on('connection', (socket) => {
+  function onConnection(socket) {
     const role = socket.handshake.auth?.role === 'display' ? 'display' : 'voter';
     socket.join(role);
 
     if (role === 'voter') {
-      votes.set(socket.id, 50); // start at mid range, as before
+      votes.set(socket.id, 50); // start at mid range
       socket.on('vote', (value) => {
         const vote = sanitizeVote(value);
         if (vote !== null) votes.set(socket.id, vote);
       });
       socket.on('disconnect', () => votes.delete(socket.id));
     }
+  }
+
+  // One Socket.IO instance per HTTP(S) server, sharing the same state.
+  const ioOptions = { maxHttpBufferSize: 1024 }; // a vote is a single number
+  const ios = [server, httpsServer].filter(Boolean).map((srv) => {
+    const io = new Server(srv, ioOptions);
+    io.on('connection', onConnection);
+    return io;
   });
 
-  // One timer for the whole server (the old code started one per connection, never cleared).
   const t0 = Date.now();
   const timer = setInterval(() => {
-    io.to('display').emit('stats', { t: Date.now() - t0, ...computeStats(votes.values()) });
+    const stats = { t: Date.now() - t0, ...computeStats(votes.values()) };
+    for (const io of ios) io.to('display').emit('stats', stats);
   }, broadcastIntervalMs);
   timer.unref();
 
-  server.on('close', () => clearInterval(timer));
+  /** Close WebSocket connections and both servers. */
+  async function close() {
+    clearInterval(timer);
+    await Promise.all(ios.map((io) => new Promise((resolve) => io.close(() => resolve()))));
+  }
 
-  return { app, server, io, votes };
+  return { app, server, httpsServer, ios, votes, close };
 }

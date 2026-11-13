@@ -34,18 +34,26 @@ npm start
 
 Open <http://localhost:8080/> on the computer connected to the projector. This is the results page. Choose the network interface the participants are connected to (usually the Wi-Fi one) to show the matching QR code.
 
+The QR code points to the **HTTPS** vote page (`https://<ip>:8443/vote.html`). HTTPS is needed for tilt-to-vote: browsers only give access to a phone's orientation sensor on secure pages. On first start, the server creates a self-signed certificate in `.cert/` and reuses it afterwards. It creates a new one if the computer's IP addresses change.
+
+Because the certificate is self-signed, each phone shows a warning the first time:
+
+- **Android / Chrome:** *Advanced* → *Proceed to … (unsafe)*
+- **iPhone / Safari:** *Show Details* → *visit this website*
+
+Then tap **"Voter en inclinant le téléphone"** and tilt the phone: flat gives 0, upright gives 100. The slider always works too.
+
 Configuration uses environment variables:
 
-| Variable | Default   | Description          |
-|----------|-----------|----------------------|
-| `PORT`   | `8080`    | HTTP port            |
-| `HOST`   | `0.0.0.0` | Interface to bind to |
+| Variable     | Default   | Description                                       |
+|--------------|-----------|---------------------------------------------------|
+| `PORT`       | `8080`    | HTTP port (results page)                          |
+| `HTTPS_PORT` | `8443`    | HTTPS port (vote page for phones)                 |
+| `HTTPS`      | `1`       | Set to `0` to disable HTTPS (tilt won't work then) |
+| `CERT_DIR`   | `.cert`   | Where the self-signed certificate is stored       |
+| `HOST`       | `0.0.0.0` | Interface to bind to                              |
 
 Use `npm run dev` to restart the server automatically when files change.
-
-### Tilt to vote
-
-Browsers only give access to the orientation sensor in a [secure context](https://developer.mozilla.org/docs/Web/Security/Secure_Contexts). In practice that means HTTPS, and iOS also requires an explicit tap. When the app is served over plain HTTP on a local network, the tilt button may not work on some phones; the slider always works. To use tilt everywhere, put the server behind an HTTPS reverse proxy (Caddy, nginx, …).
 
 Development
 -----------

@@ -22,7 +22,7 @@ before(async () => {
 
 after(async () => {
   for (const c of clients) c.close();
-  await new Promise((resolve) => poll.io.close(resolve));
+  await poll.close();
 });
 
 function connect(role) {
